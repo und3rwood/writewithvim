@@ -9,29 +9,8 @@
 </head>
 <body>
     
-    <div class="tab" id="tab">&#9776;</div>
-
-    <div class="hidden-menu" id="hiddenMenu">
-        <ul>
-            <li><a href="#">Commit to Repo</a></li>
-            <li><a href="#">Background color</a></li>
-            <li><a href="#">Text color</a></li>
-            <li><a href="#">Your git info</a></li>
-        </ul>
-    </div>
-
-    <div class="git-info-menu" id="gitInfoMenu">
-        <input type="text" placeholder="Name" id="nameInput">
-        <input type="text" placeholder="Email" id="emailInput">
-        <input type="text" placeholder="Username" id="usernameInput">
-        <input type="text" placeholder="Token" id="tokenInput">
-        <button id="saveGitInfo">Save</button>
-    </div>
-
-    
     <div id="editor"></div>
     <script>
-        
         const editor = ace.edit("editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
@@ -66,28 +45,10 @@
             }
         }
 
-    
-
     // Add an event listener to load the saved text when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', loadText);
     // Add an event listener to save the text in the editor whenever it changes
     editor.on('change', saveText);
-
-    const tab = document.getElementById('tab');
-    const hiddenMenu = document.getElementById('hiddenMenu');
-    let menuOpen = false;
-
-    tab.addEventListener('click', () => {
-    if (!menuOpen) {
-        hiddenMenu.style.left = '0';
-        tab.style.left = '200px';
-        menuOpen = true;
-    } else {
-        hiddenMenu.style.left = '-200px';
-        tab.style.left = '0';
-        menuOpen = false;
-        }
-    });
 
     async function saveToGitHub() {
     const text = editor.getValue(); // Replace this with the method to get the text from your editor
@@ -131,21 +92,62 @@
     }
     }
 
-    const gitInfoLink = document.querySelector('li > a[href="#Your git info"]');
-    const gitInfoMenu = document.getElementById('gitInfoMenu');
-    let gitInfoMenuOpen = false;
 
-    gitInfoLink.addEventListener('click', () => {
-        if (!gitInfoMenuOpen) {
-            gitInfoMenu.style.left = '200px';
-            gitInfoMenuOpen = true;
-        } else {
-            gitInfoMenu.style.left = '-300px';
-            gitInfoMenuOpen = false;
+
+// CommandPalette class definition
+class CommandPalette {
+    constructor() {
+        this.isOpen = false;
+        this.element = null;
+    }
+
+    open() {
+        if (!this.isOpen) {
+            this.element = document.createElement('div');
+            this.element.id = 'command-palette';
+            this.element.style.position = 'fixed';
+            this.element.style.top = '50%';
+            this.element.style.left = '50%';
+            this.element.style.transform = 'translate(-50%, -50%)';
+            this.element.style.zIndex = '1000';
+            this.element.style.backgroundColor = 'black';
+            this.element.style.border = '4px solid black';
+            this.element.style.padding = '10px';
+            this.element.style.width = '30vw';
+            this.element.style.height = '30vh';
+            this.element.style.overflowY = 'auto';
+
+            document.body.appendChild(this.element);
+            this.isOpen = true;
         }
-    });
+    }
 
+    close() {
+        if (this.isOpen) {
+            document.body.removeChild(this.element);
+            this.isOpen = false;
+        }
+    }
+}
 
+// Instantiate the CommandPalette class
+const palette = new CommandPalette();
+
+// Add an event listener for keydown events
+document.addEventListener('keydown', (event) => {
+    // Check if the cmd+space keys are pressed
+    if ((event.metaKey || event.ctrlKey) && event.code === 'Space') {
+    if (palette.isOpen) {
+        palette.close();
+    } else {
+        palette.open();
+    }
+    if (event.code === 'esc') {
+        palette.close();
+    }
+}
+
+});
 
     </script>
 </body>
