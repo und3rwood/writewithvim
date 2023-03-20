@@ -1,0 +1,114 @@
+.tab {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 30px;
+    height: 30px;
+    background-color: #333;
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: left 0.3s;
+}
+
+.hidden-menu {
+    position: fixed;
+    top: 0;
+    left: -200px;
+    width: 200px;
+    height: 100%;
+    background-color: #333;
+    transition: left 0.3s;
+    z-index: 1000;
+}
+
+.hidden-menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.hidden-menu li {
+    padding: 10px;
+    font
+}
+
+.hidden-menu a {
+    color: white;
+    text-decoration: none;
+    font-family: 'iawriter';
+    
+}
+
+.git-info-menu {
+    position: absolute;
+    left: -300px;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    background-color: #333;
+    transition: left 0.3s;
+}
+
+input {
+    display: block;
+    margin: 10px;
+    padding: 5px;
+}
+
+button {
+    display: block;
+    margin: 10px;
+    padding: 5px;
+}
+
+
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#editor {
+    position: relative;
+    height: 100%;
+    width: 50%;
+    margin: 0 auto;
+}
+
+.ace_editor {
+    background-color: transparent !important;
+}
+.ace_editor .ace_text-layer {
+    color: black !important;
+}
+.ace_editor .ace_active-line {
+    background-color: transparent !important;
+}
+.ace_text-layer {
+    text-align: left !important;
+}
+.ace_line {
+    text-indent: 0 !important;
+}
+.ace_editor .ace_line-group:first-child .ace_line {
+    text-indent: 2em !important;
+}
+
+.ace_editor {
+    z-index: 0;
+}
+
+@font-face {
+  font-family: 'iawriter';
+  src: url('fonts/iAWriterMonoS-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}

@@ -1,51 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-    html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-#editor {
-    position: relative;
-    height: 100%;
-    width: 50%;
-    margin: 0 auto;
-}
-.ace_editor {
-    background-color: transparent !important;
-}
-.ace_editor .ace_text-layer {
-    color: black !important;
-}
-.ace_editor .ace_active-line {
-    background-color: transparent !important;
-}
-.ace_text-layer {
-    text-align: left !important;
-}
-.ace_line {
-    text-indent: 0 !important;
-}
-.ace_editor .ace_line-group:first-child .ace_line {
-    text-indent: 2em !important;
-}
-
-
-
-
-</style>
+    <link rel="stylesheet" href="styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text Editor with Vim Keybindings</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous"></script>
 </head>
 <body>
+    
+    <div class="tab" id="tab">&#9776;</div>
+
+    <div class="hidden-menu" id="hiddenMenu">
+        <ul>
+            <li><a href="#">Commit to Repo</a></li>
+            <li><a href="#">Background color</a></li>
+            <li><a href="#">Text color</a></li>
+            <li><a href="#">Your git info</a></li>
+        </ul>
+    </div>
+
+    <div class="git-info-menu" id="gitInfoMenu">
+        <input type="text" placeholder="Name" id="nameInput">
+        <input type="text" placeholder="Email" id="emailInput">
+        <input type="text" placeholder="Username" id="usernameInput">
+        <input type="text" placeholder="Token" id="tokenInput">
+        <button id="saveGitInfo">Save</button>
+    </div>
+
+    
     <div id="editor"></div>
     <script>
         
@@ -54,21 +37,115 @@
         editor.session.setMode("ace/mode/text");
         editor.setKeyboardHandler("ace/keyboard/vim");
         editor.renderer.setShowGutter(false);
+        
         editor.setOptions({
             showInvisibles: false, // Disable display of invisible characters
             tabSize: 4,
             printMargin: false,
             fontSize: 24,
             indentedSoftWrap: false,
-            wrap: "free"
-        });
+            wrap: "free",
+            fontFamily: 'iawriter'
+        })
 
         ace.config.loadModule("ace/keybinding/vim", function() { // Use Vim Here
             Vim = require("ace/keyboard/vim").Vim
             Vim.map("j", "gj", "normal")
             Vim.map("k", "gk", "normal")
         }) 
-   
+
+        function saveText() {
+            const text = editor.getValue();
+            localStorage.setItem('savedText', text);
+        }
+
+        function loadText() {
+            const savedText = localStorage.getItem('savedText');
+            if (savedText) {
+                editor.setValue(savedText);
+            }
+        }
+
+    
+
+    // Add an event listener to load the saved text when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', loadText);
+    // Add an event listener to save the text in the editor whenever it changes
+    editor.on('change', saveText);
+
+    const tab = document.getElementById('tab');
+    const hiddenMenu = document.getElementById('hiddenMenu');
+    let menuOpen = false;
+
+    tab.addEventListener('click', () => {
+    if (!menuOpen) {
+        hiddenMenu.style.left = '0';
+        tab.style.left = '200px';
+        menuOpen = true;
+    } else {
+        hiddenMenu.style.left = '-200px';
+        tab.style.left = '0';
+        menuOpen = false;
+        }
+    });
+
+    async function saveToGitHub() {
+    const text = editor.getValue(); // Replace this with the method to get the text from your editor
+    const token = 'your_personal_access_token'; // Replace this with your actual token
+    const owner = 'your_github_username'; // Replace this with your GitHub username
+    const repo = 'your_repo_name'; // Replace this with the name of the repo you want to save the text to
+    const path = 'your_file_name.txt'; // Replace this with the desired file name
+
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+    // Get the current file content from the repo
+    const response = await fetch(url, {
+        headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github+json'
+        }
+    });
+
+    const data = await response.json();
+
+    // Update the file content in the repo
+    const updateResponse = await fetch(url, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github+json'
+        },
+        body: JSON.stringify({
+            message: 'Update file content',
+            content: btoa(text),
+            sha: data.sha
+        })
+    });
+
+    const updateData = await updateResponse.json();
+
+    if (updateResponse.ok) {
+        console.log('File saved successfully:', updateData);
+    } else {
+        console.error('Error saving file:', updateData);
+    }
+    }
+
+    const gitInfoLink = document.querySelector('li > a[href="#Your git info"]');
+    const gitInfoMenu = document.getElementById('gitInfoMenu');
+    let gitInfoMenuOpen = false;
+
+    gitInfoLink.addEventListener('click', () => {
+        if (!gitInfoMenuOpen) {
+            gitInfoMenu.style.left = '200px';
+            gitInfoMenuOpen = true;
+        } else {
+            gitInfoMenu.style.left = '-300px';
+            gitInfoMenuOpen = false;
+        }
+    });
+
+
 
     </script>
 </body>
