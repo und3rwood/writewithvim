@@ -50,14 +50,11 @@
     // Add an event listener to save the text in the editor whenever it changes
     editor.on('change', saveText);
 
-    async function saveToGitHub() {
+    async function saveToGitHub(owner, token, repo, filename) {
     const text = editor.getValue(); // Replace this with the method to get the text from your editor
-    const token = 'your_personal_access_token'; // Replace this with your actual token
-    const owner = 'your_github_username'; // Replace this with your GitHub username
-    const repo = 'your_repo_name'; // Replace this with the name of the repo you want to save the text to
-    const path = 'your_file_name.txt'; // Replace this with the desired file name
-
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+// Log the owner, token, repo, and filename
+console.log(`Owner: ${owner}, Token: ${token}, Repo: ${repo}, Filename: ${filename}`);
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
 
     // Get the current file content from the repo
     const response = await fetch(url, {
@@ -97,25 +94,25 @@ class Menu {
     constructor(items) {
         this.items = items;
         this.menuElement = document.createElement('div');
-
         const searchBox = document.createElement('input');
+        this.searchBox = searchBox;
         searchBox.type = 'text';
         searchBox.placeholder = 'Search for options...';
         searchBox.style.width = '100%';
-        searchBox.style.padding = '5px 10px';
+        searchBox.style.padding = 'auto';
         searchBox.style.marginBottom = '10px';
         searchBox.addEventListener('input', () => this.filterItems(searchBox.value));
-    
-        searchBox.addEventListener('keydown', (event) => 
-        {
+       // Add an event listener for the 'Enter' key press
+        searchBox.addEventListener('keydown', (event) => {
             if (event.code === 'Enter') {
-                const visibleItemCount = menu.visibleItemCount(searchText);            
-                if (visibleItemCount.length === 1) {
+                const visibleItems = this.items.filter(item => item.text.toLowerCase().includes(searchBox.value.toLowerCase()));
+                if (visibleItems.length === 1) {
                     visibleItems[0].action();
                 }
             }
         });
 
+        
         this.menuElement.appendChild(searchBox);
 
         this.listElement = document.createElement('ul');
@@ -131,22 +128,13 @@ class Menu {
     createItem(item) {
         const listItem = document.createElement('li');
         listItem.style.display = 'block';
-        listItem.style.padding = '5px 10px';
+        listItem.style.padding = 'auto';
+        listItem.style.marginBottom = '5px'
         listItem.style.cursor = 'pointer';
         listItem.textContent = item.text;
         listItem.addEventListener('click', item.action);
         this.listElement.appendChild(listItem);
     }
-
-    visibleItems(searchText) {
-        return this.items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
-    }
-
-    visibleItemCount(searchText) {
-        const filteredItems = this.visibleItems(searchText);
-        return filteredItems.length;
-    }
-
 
     filterItems(searchText) {
         this.listElement.innerHTML = '';
@@ -198,9 +186,6 @@ class GitInfo {
         const token = localStorage.getItem('token');
         const repo = localStorage.getItem('repo');
         const filename = localStorage.getItem('filename');
-
-        // Call the saveToGitHub function with the saved credentials
-        saveToGitHub(username, token, repo, filename);
     }
 
     attachTo(element) {
@@ -217,7 +202,11 @@ const menuItems = [
     {
         text: 'save to git repo',
         action: () => {
-                gitInfo.saveCredentials();
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('token');
+            const repo = localStorage.getItem('repo');
+            const filename = localStorage.getItem('filename');
+            saveToGitHub(username, token, repo, filename);
         }
     },
     {
@@ -244,7 +233,6 @@ class CommandPalette {
     open() {
         if (!this.isOpen) {
 
-            
 
         // Create the overlay element
             this.overlay = document.createElement('div');
@@ -274,11 +262,15 @@ class CommandPalette {
             this.element.style.height = '30vh';
         // Enable vertical scrolling if the content overflows the element's height
             this.element.style.overflowY = 'auto';
+
+            this.element.style.display = 'flex';
+            this.element.style.alignItems = 'center';
+            this.element.style.justifyContent = 'center';
             
-             document.body.appendChild(this.element);
+            document.body.appendChild(this.element);
         // Add the menu to the command palette
             this.element.appendChild(menu.menuElement);
-            
+            menu.menuElement.searchBox.focus()
             this.isOpen = true;
         }
     }
@@ -289,6 +281,7 @@ class CommandPalette {
             document.body.removeChild(this.element);
             this.isOpen = false;
         }
+        
     }
 }
 
@@ -303,10 +296,6 @@ document.addEventListener('keydown', (event) => {
         palette.close();
     } else {
         palette.open();
-    }
-   // Check if the 'esc' key is pressed
-    if (event.code === 'Escape') {
-        palette.close();
     }
    
 }
