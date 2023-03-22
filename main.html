@@ -103,14 +103,6 @@ class Menu {
         searchBox.style.marginBottom = '10px';
         searchBox.addEventListener('input', () => this.filterItems(searchBox.value));
        // Add an event listener for the 'Enter' key press
-        searchBox.addEventListener('keydown', (event) => {
-            if (event.code === 'Enter') {
-                const visibleItems = this.items.filter(item => item.text.toLowerCase().includes(searchBox.value.toLowerCase()));
-                if (visibleItems.length === 1) {
-                    visibleItems[0].action();
-                }
-            }
-        });
 
         
         this.menuElement.appendChild(searchBox);
@@ -244,7 +236,13 @@ class CommandPalette {
             this.overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
             this.overlay.style.backdropFilter = 'blur(5px)';
             this.overlay.style.zIndex = '999';
+
+
             document.body.appendChild(this.overlay);
+            //event listener for closing the overlay
+            this.overlay.addEventListener('click', () => {
+                palette.close();
+            });
         //make the box
             this.element = document.createElement('div');
             this.element.id = 'command-palette';
@@ -270,9 +268,9 @@ class CommandPalette {
             document.body.appendChild(this.element);
         // Add the menu to the command palette
             this.element.appendChild(menu.menuElement);
-            menu.menuElement.searchBox.focus()
             this.isOpen = true;
         }
+        
     }
 
     close() {
@@ -283,6 +281,8 @@ class CommandPalette {
         }
         
     }
+
+    
 }
 
 // Instantiate the CommandPalette class
@@ -302,7 +302,8 @@ document.addEventListener('keydown', (event) => {
 
 });
 
-    </script>
+
+</script>
 </body>
 </html>
     
