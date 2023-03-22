@@ -92,6 +92,146 @@
     }
     }
 
+// Menu class definition
+class Menu {
+    constructor(items) {
+        this.items = items;
+        this.menuElement = document.createElement('div');
+
+        const searchBox = document.createElement('input');
+        searchBox.type = 'text';
+        searchBox.placeholder = 'Search for options...';
+        searchBox.style.width = '100%';
+        searchBox.style.padding = '5px 10px';
+        searchBox.style.marginBottom = '10px';
+        searchBox.addEventListener('input', () => this.filterItems(searchBox.value));
+    
+        searchBox.addEventListener('keydown', (event) => 
+        {
+            if (event.code === 'Enter') {
+                const visibleItemCount = menu.visibleItemCount(searchText);            
+                if (visibleItemCount.length === 1) {
+                    visibleItems[0].action();
+                }
+            }
+        });
+
+        this.menuElement.appendChild(searchBox);
+
+        this.listElement = document.createElement('ul');
+        this.listElement.style.listStyleType = 'none';
+        this.listElement.style.padding = '0';
+        this.listElement.style.margin = '0';
+        this.menuElement.appendChild(this.listElement);
+
+        items.forEach(item => this.createItem(item));
+    }
+
+
+    createItem(item) {
+        const listItem = document.createElement('li');
+        listItem.style.display = 'block';
+        listItem.style.padding = '5px 10px';
+        listItem.style.cursor = 'pointer';
+        listItem.textContent = item.text;
+        listItem.addEventListener('click', item.action);
+        this.listElement.appendChild(listItem);
+    }
+
+    visibleItems(searchText) {
+        return this.items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
+    }
+
+    visibleItemCount(searchText) {
+        const filteredItems = this.visibleItems(searchText);
+        return filteredItems.length;
+    }
+
+
+    filterItems(searchText) {
+        this.listElement.innerHTML = '';
+        this.items
+            .filter(item => item.text.toLowerCase().includes(searchText.toLowerCase()))
+            .forEach(item => this.createItem(item));
+    }
+
+
+
+    attachTo(element) {
+        element.appendChild(this.menuElement);
+    }
+}
+
+        
+// GitInfo class definition
+class GitInfo {
+// Function to create the gitInfoMenu as a div centered on the palette
+    
+    constructor() {
+        this.element = document.createElement('div');
+        this.element.id = 'git-info'; 
+        this.createInput('GitHub Username', 'username');
+        this.createInput('GitHub Token', 'token');
+        this.createInput('Repository Name', 'repo');
+        this.createInput('File Name', 'filename');
+        const saveButton = document.createElement('button');
+        saveButton.textContent = 'Save';
+        saveButton.addEventListener('click', () => this.saveCredentials());
+        this.element.appendChild(saveButton);
+    }
+
+    createInput(labelText, storageKey) {
+        const label = document.createElement('label');
+        label.textContent = labelText;
+        this.element.appendChild(label);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = localStorage.getItem(storageKey) || '';
+        input.addEventListener('input', () => localStorage.setItem(storageKey, input.value));
+        this.element.appendChild(input);
+    }
+
+    saveCredentials() {
+        // Save the credentials to localStorage
+        const username = localStorage.getItem('username');
+        const token = localStorage.getItem('token');
+        const repo = localStorage.getItem('repo');
+        const filename = localStorage.getItem('filename');
+
+        // Call the saveToGitHub function with the saved credentials
+        saveToGitHub(username, token, repo, filename);
+    }
+
+    attachTo(element) {
+        element.appendChild(this.element);
+    }
+
+}
+
+// Instantiate the GitInfo class
+const gitInfo = new GitInfo();
+
+// Modify the menuItems array to include the gitInfo element
+const menuItems = [
+    {
+        text: 'save to git repo',
+        action: () => {
+                gitInfo.saveCredentials();
+        }
+    },
+    {
+        text: 'add your git info',
+        action: () => {
+// Create the GitInfoMenu as a child of the palette
+        gitInfo.attachTo(palette.element);
+    }
+
+           
+    },
+];
+        
+const menu = new Menu(menuItems);
 
 
 // CommandPalette class definition
@@ -103,6 +243,21 @@ class CommandPalette {
 
     open() {
         if (!this.isOpen) {
+
+            
+
+        // Create the overlay element
+            this.overlay = document.createElement('div');
+            this.overlay.style.position = 'fixed';
+            this.overlay.style.top = '0';
+            this.overlay.style.left = '0';
+            this.overlay.style.width = '100%';
+            this.overlay.style.height = '100%';
+            this.overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            this.overlay.style.backdropFilter = 'blur(5px)';
+            this.overlay.style.zIndex = '999';
+            document.body.appendChild(this.overlay);
+        //make the box
             this.element = document.createElement('div');
             this.element.id = 'command-palette';
             this.element.style.position = 'fixed';
@@ -110,20 +265,27 @@ class CommandPalette {
             this.element.style.left = '50%';
             this.element.style.transform = 'translate(-50%, -50%)';
             this.element.style.zIndex = '1000';
-            this.element.style.backgroundColor = 'black';
-            this.element.style.border = '4px solid black';
+            this.element.style.backgroundColor = 'white';
+            this.element.style.border = '2px solid black';
+        // Add border-radius to make the border rounded at the corners
+            this.element.style.borderRadius = '10px';
             this.element.style.padding = '10px';
             this.element.style.width = '30vw';
             this.element.style.height = '30vh';
+        // Enable vertical scrolling if the content overflows the element's height
             this.element.style.overflowY = 'auto';
-
-            document.body.appendChild(this.element);
+            
+             document.body.appendChild(this.element);
+        // Add the menu to the command palette
+            this.element.appendChild(menu.menuElement);
+            
             this.isOpen = true;
         }
     }
 
     close() {
         if (this.isOpen) {
+            document.body.removeChild(this.overlay);
             document.body.removeChild(this.element);
             this.isOpen = false;
         }
@@ -142,9 +304,11 @@ document.addEventListener('keydown', (event) => {
     } else {
         palette.open();
     }
-    if (event.code === 'esc') {
+   // Check if the 'esc' key is pressed
+    if (event.code === 'Escape') {
         palette.close();
     }
+   
 }
 
 });
