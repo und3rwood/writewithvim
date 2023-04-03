@@ -40,6 +40,15 @@ html, body {
     z-index: 0;
 }
 
+.ace_editor .ace_selection {
+  background: #FFC0CB !important;
+}
+
+.ace_editor .ace_cursor {
+  color: black;
+}
+
+
 @font-face {
   font-family: 'iawriter';
   src: url('fonts/iAWriterMonoS-Regular.woff2') format('woff2');

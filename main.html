@@ -25,6 +25,7 @@
             indentedSoftWrap: false,
             wrap: "free",
             fontFamily: 'iawriter'
+             
         })
 
         ace.config.loadModule("ace/keybinding/vim", function() { // Use Vim Here
@@ -145,31 +146,52 @@ class Menu {
         
 // GitInfo class definition
 class GitInfo {
-// Function to create the gitInfoMenu as a div centered on the palette
+    // Function to create the gitInfoMenu as a div centered on the palette
     
     constructor() {
         this.element = document.createElement('div');
-        this.element.id = 'git-info'; 
-        this.createInput('GitHub Username', 'username');
-        this.createInput('GitHub Token', 'token');
-        this.createInput('Repository Name', 'repo');
-        this.createInput('File Name', 'filename');
+        this.element.id = 'git-info'; // this is for style reference
+        // Create a grid container for the inputs and labels
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'auto auto';
+        grid.style.gridGap = '10px';
+        grid.style.alignItems = 'center';
+        this.element.appendChild(grid); // Added semicolon
+        this.createInput('GitHub Username', 'username', grid);
+        this.createInput('GitHub Token', 'token', grid);
+        this.createInput('Repository Name', 'repo', grid);
+        this.createInput('File Name', 'filename', grid);
         const saveButton = document.createElement('button');
         saveButton.textContent = 'Save';
         saveButton.addEventListener('click', () => this.saveCredentials());
+        // Append the save button to the main element, not the grid
         this.element.appendChild(saveButton);
+
+        // Create a button element
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        // Add a click event listener to the button
+        closeButton.addEventListener('click', () => {
+            // Remove the panel element from its parent
+            this.element.parentNode.removeChild(this.element);
+        });
+        // Append the button to the panel element
+        this.element.appendChild(closeButton);
     }
 
-    createInput(labelText, storageKey) {
+    createInput(labelText, storageKey, grid) {
         const label = document.createElement('label');
         label.textContent = labelText;
-        this.element.appendChild(label);
+        // Append the label to the grid container
+        grid.appendChild(label);
 
         const input = document.createElement('input');
         input.type = 'text';
         input.value = localStorage.getItem(storageKey) || '';
         input.addEventListener('input', () => localStorage.setItem(storageKey, input.value));
-        this.element.appendChild(input);
+        // Append the input to the grid container
+        grid.appendChild(input); // Added semicolon
     }
 
     saveCredentials() {
@@ -181,11 +203,12 @@ class GitInfo {
     }
 
     attachTo(element) {
-        element.appendChild(this.element);
+        element.appendChild(this.element); // Added semicolon
     }
 
-}
+    
 
+}
 // Instantiate the GitInfo class
 const gitInfo = new GitInfo();
 
@@ -206,10 +229,14 @@ const menuItems = [
         action: () => {
 // Create the GitInfoMenu as a child of the palette
         gitInfo.attachTo(palette.element);
-    }
-
-           
+        }
     },
+    {
+        text: 'files',
+        action: () => {
+            dirTree.attachTo(palette.element);
+        }
+    }
 ];
         
 const menu = new Menu(menuItems);
@@ -288,6 +315,86 @@ class CommandPalette {
 // Instantiate the CommandPalette class
 const palette = new CommandPalette();
 
+async function generateDirectoryTree(username, repo, branch) {
+        const url = `https://api.github.com/repos/${username}/${repo}/contents?ref=${branch}`;
+        console.log(`https://api.github.com/repos/${username}/${repo}/contents?ref=${branch}`);
+        const response = await fetch(url, {
+            headers: {
+                Accept: 'application/vnd.github.v3+json',
+            },
+        });
+        const data = await response.json();
+
+        const tree = { name: repo, type: 'folder', children: [] };
+
+        for (let item of data) {
+            const path = item.path.split('/');
+            let parent = tree;
+            for (let i = 0; i < path.length - 1; i++) {
+                const folderName = path[i];
+                let folder = parent.children.find(child => child.name === folderName);
+                if (!folder) {
+                    folder = { name: folderName, type: 'folder', children: [] };
+                    parent.children.push(folder);
+                }
+                parent = folder;
+            }
+
+            const fileName = path[path.length - 1];
+            if (item.type === 'file') {
+                parent.children.push({ name: fileName, type: 'file' });
+            } else if (item.type === 'dir') {
+                const folder = { name: fileName, type: 'folder', children: [] };
+                parent.children.push(folder);
+
+                const subDirectory = await generateDirectoryTree(owner, repo, `${branch}:${item.path}`);
+                folder.children = subDirectory.children;
+            }
+        }
+
+        return tree;
+    }
+
+class DirectoryTreeDisplay {
+  constructor(containerElement, treeData) {
+    console.log('constructing dir tree');
+    this.element = document.createElement('div');
+    const username = localStorage.getItem('username');
+    const repo = localStorage.getItem('repo');
+    const branch = 'main'; // this is dumb and silly but we're hardcoding this for now. holy shit I'm so sleepy that I named it 'branch' instead of main. holy fuck
+    this.treeData = generateDirectoryTree(username, repo, branch);
+  }
+
+  render() {
+    const tree = this.buildTree(this.treeData);
+    this.containerElement.appendChild(tree);
+  }
+
+  buildTree(data) {
+    const tree = document.createElement('ul');
+    tree.classList.add('directory-tree');
+
+    for (const item of data) {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      name.innerText = item.name;
+      li.appendChild(name);
+
+      if (item.type === 'tree') {
+        const subtree = this.buildTree(item.children);
+        li.appendChild(subtree);
+      }
+
+      tree.appendChild(li);
+    }
+
+    return tree;
+  }
+  attachTo(element) {
+        element.appendChild(this.element); 
+    }
+}
+const dirTree = new DirectoryTreeDisplay();
 // Add an event listener for keydown events
 document.addEventListener('keydown', (event) => {
     // Check if the cmd+space keys are pressed
