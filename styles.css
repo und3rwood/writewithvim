@@ -70,3 +70,18 @@ html, body {
     height: auto;
     overflow-y: auto;
 }
+
+#new-file {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 10px;
+    padding: 10px;
+    width: 80%;
+    height: auto;
+    overflow-y: auto;
+}

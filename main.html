@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel = "icon" href ="favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Editor with Vim Keybindings</title>
+    <title>webprose</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous"></script>
 </head>
 <body>
     
     <div id="editor"></div>
     <script>
+
         const editor = ace.edit("editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
@@ -45,13 +47,19 @@
                 editor.setValue(savedText);
             }
         }
-
+        
+        function loadTitle() {
+            const filename = localStorage.getItem('filename');
+            title = filename;
+        }
     // Add an event listener to load the saved text when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', loadText);
+    // add an event listener to load the title when the DOM loaded
+    document.addEventListener('DOMContentLoaded', loadTitle);
     // Add an event listener to save the text in the editor whenever it changes
     editor.on('change', saveText);
 
-    async function saveToGitHub(owner, token, repo, filename) {
+async function saveToGitHub(owner, token, repo, filename) {
     const text = editor.getValue(); // Replace this with the method to get the text from your editor
 // Log the owner, token, repo, and filename
 console.log(`Owner: ${owner}, Token: ${token}, Repo: ${repo}, Filename: ${filename}`);
@@ -88,13 +96,46 @@ console.log(`Owner: ${owner}, Token: ${token}, Repo: ${repo}, Filename: ${filena
     } else {
         console.error('Error saving file:', updateData);
     }
-    }
+}
+
+async function loadTextFileFromGithub(repoOwner, repoName, filePath) {
+  const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to load file from ${url}: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  if (data.type !== 'file') {
+    throw new Error(`Expected ${filePath} to be a file, but got ${data.type}`);
+  }
+
+  const content = atob(data.content);
+
+  return content;
+}
+
 
 // Menu class definition
 class Menu {
     constructor(items) {
         this.items = items;
         this.menuElement = document.createElement('div');
+        // Add text element before the search box
+        var title = document.createElement('p');
+        title.textContent = localStorage.getItem('filename');
+        this.menuElement.appendChild(title);
+
+        // Add event listener to update the search box value when localstorage changes
+        window.addEventListener('storage', () => {
+            const filename = localStorage.getItem('filename');
+            if (filename) {
+                this.title.textContent = filename;
+            }
+        });
+
         const searchBox = document.createElement('input');
         this.searchBox = searchBox;
         searchBox.type = 'text';
@@ -162,12 +203,6 @@ class GitInfo {
         this.createInput('GitHub Token', 'token', grid);
         this.createInput('Repository Name', 'repo', grid);
         this.createInput('File Name', 'filename', grid);
-        const saveButton = document.createElement('button');
-        saveButton.textContent = 'Save';
-        saveButton.addEventListener('click', () => this.saveCredentials());
-        // Append the save button to the main element, not the grid
-        this.element.appendChild(saveButton);
-
         // Create a button element
         const closeButton = document.createElement('button');
         closeButton.textContent = 'Close';
@@ -212,9 +247,10 @@ class GitInfo {
 // Instantiate the GitInfo class
 const gitInfo = new GitInfo();
 
+
 // Modify the menuItems array to include the gitInfo element
-const menuItems = [
-    {
+var menuItems = [
+    {   
         text: 'save to git repo',
         action: () => {
             const username = localStorage.getItem('username');
@@ -222,6 +258,7 @@ const menuItems = [
             const repo = localStorage.getItem('repo');
             const filename = localStorage.getItem('filename');
             saveToGitHub(username, token, repo, filename);
+            document.title = filename;
         }
     },
     {
@@ -236,9 +273,20 @@ const menuItems = [
         action: () => {
             dirTree.attachTo(palette.element);
         }
+    },
+    {
+        text: 'new file',
+        action: () => {
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('token');
+            const repo = localStorage.getItem('repo');
+            const filename = localStorage.getItem('filename');
+            saveToGitHub(username, token, repo, filename); //save the old file
+            newFile.attachTo(palette.element);
+        }
     }
 ];
-        
+
 const menu = new Menu(menuItems);
 
 
@@ -395,6 +443,63 @@ class DirectoryTreeDisplay {
     }
 }
 const dirTree = new DirectoryTreeDisplay();
+
+class NewFile {
+    constructor() {
+        this.element = document.createElement('div');
+        this.element.id = 'new-file';
+        const grid = document.createElement('div');
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'auto auto';
+        grid.style.gridGap = '10px';
+        grid.style.alignItems = 'center';
+        this.element.appendChild(grid); // Added semicolon
+
+        this.createInput('new file: ', 'filename', grid)
+        // Create a button element
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'make new file';
+        // Add a click event listener to the button
+        closeButton.addEventListener('click', () => {
+            // Remove the panel element from its parent
+            var filename = localStorage.getItem('filename')
+            this.element.parentNode.removeChild(this.element);
+            newFile.write(filename);
+        });
+        // Append the button to the panel element
+        this.element.appendChild(closeButton);
+    }
+
+    createInput(labelText, storageKey, grid) {
+        const label = document.createElement('label');
+        label.textContent = labelText;
+        // Append the label to the grid container
+        grid.appendChild(label);
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = localStorage.getItem(storageKey) || '';
+        input.addEventListener('input', () => localStorage.setItem(storageKey, input.value));
+        // Append the input to the grid container
+        grid.appendChild(input); // Added semicolon
+    }
+  
+    attachTo(element) {
+        element.appendChild(this.element); // Added semicolon
+    }
+
+    write(filename) {
+        // Get the ACE editor instance
+        var editor = ace.edit("editor");
+        // Clear the text buffer
+        editor.setValue("");
+        menuItems[0].text = filename; // append the filename to the first menu item
+        console.log(menuItems[0].text)
+
+    }
+}
+
+const newFile = new NewFile();
 // Add an event listener for keydown events
 document.addEventListener('keydown', (event) => {
     // Check if the cmd+space keys are pressed
