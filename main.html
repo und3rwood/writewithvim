@@ -16,22 +16,23 @@
 
     <div id="editor"></div>
     <script>
-
+        //wipe the localstorage
+        localStorage.setItem('filename','');
+        localStorage.setItem('savedText','');
         const editor = ace.edit("editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
         editor.setKeyboardHandler("ace/keyboard/vim");
         editor.renderer.setShowGutter(false);
         editor.commands.addCommand({
-                name: 'save',
-                bindKey: { win: 'Ctrl-S', mac: 'Cmd-S' },
-                exec: function (editor) {
-                    // call your save function here
-                    saveFile();
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
-            });
-
+            name: 'save',
+            bindKey: { win: 'Ctrl-S', mac: 'Cmd-S' },
+            exec: function (editor) {
+                // call your save function here
+                save();
+            },
+            readOnly: true // false if this command should not apply in readOnly mode
+        });
 
         editor.setOptions({
             showInvisibles: false, // Disable display of invisible characters
@@ -148,7 +149,13 @@
             return content;
         }
 
-
+        function save() {
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('token');
+            const repo = localStorage.getItem('repo');
+            const filename = localStorage.getItem('filename');
+            saveToGitHub(username, token, repo, filename);
+        }
 
         // Menu class definition
         class Menu {
@@ -285,11 +292,7 @@
             {
                 text: 'save to git repo',
                 action: () => {
-                    const username = localStorage.getItem('username');
-                    const token = localStorage.getItem('token');
-                    const repo = localStorage.getItem('repo');
-                    const filename = localStorage.getItem('filename');
-                    saveToGitHub(username, token, repo, filename);
+                    save();
                     document.title = filename;
                 }
             },
