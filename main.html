@@ -58,7 +58,7 @@
         var defaultName = "text.txt";
         var defaultContent = "Exceed:"; // make a function that access the content of the last file opened
         //at program initialization, create a new file obj
-        function init() {
+        function init() { // I think you should scrap this one for now.
             var file = new File(defaultName, defaultContent);
             var fileJSON = JSON.stringify(file);
             localStorage.setItem(file.name, fileJSON)
@@ -69,9 +69,8 @@
 
         init(); //instantiate the default file
 
-        function saveText() {
+        function saveText(filename) { //chooses which file to save to based on the arg
             // Get the current filename from the local storage
-            const filename = localStorage.getItem("filename");
 
             // Log the filename that is being saved
             console.log("Saving file: " + filename);
@@ -357,12 +356,12 @@
                 grid.appendChild(input); // Added semicolon
             }
 
-            saveCredentials() {
+            saveCredentials(username, token, repo, filename) { // this function does not work and is never called ever
                 // Save the credentials to localStorage
-                const username = localStorage.getItem('username');
-                const token = localStorage.getItem('token');
-                const repo = localStorage.getItem('repo');
-                const filename = localStorage.getItem('filename');
+                localStorage.setItem('username', username);
+                localStorage.setItem('token',token);
+                localStorage.setItem('repo', repo);
+                localStorage.setItem('filename',filename);
             }
 
             attachTo(element) {
