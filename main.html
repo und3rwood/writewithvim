@@ -16,9 +16,7 @@
 
     <div id="editor"></div>
     <script>
-        //wipe the localstorage
-        localStorage.setItem('filename','');
-        localStorage.setItem('savedText','');
+        document.title = localStorage.getItem('filename');
         const editor = ace.edit("editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
@@ -51,15 +49,84 @@
             Vim.map("k", "gk", "normal")
         })
 
-        function saveText() {
-            const text = editor.getValue();
-            localStorage.setItem('savedText', text);
+        //structure containing files and their names
+        function File(name, content) {
+            this.name = name;
+            this.content = content;
         }
 
-        function loadText() {
-            const savedText = localStorage.getItem('savedText');
+        var defaultName = "text.txt";
+        var defaultContent = "Exceed:"; // make a function that access the content of the last file opened
+        //at program initialization, create a new file obj
+        function init() {
+            var file = new File(defaultName, defaultContent);
+            var fileJSON = JSON.stringify(file);
+            localStorage.setItem(file.name, fileJSON)
+            //var file = JSON.parse(fileJSON); //this parses the JSON STRING back into obj form
+            editor.setValue(file.content);
+        }
+
+
+        init(); //instantiate the default file
+
+        function saveText() {
+            // Get the current filename from the local storage
+            const filename = localStorage.getItem("filename");
+
+            // Log the filename that is being saved
+            console.log("Saving file: " + filename);
+
+            // Get the editor content
+            const text = editor.getValue();
+
+            // Log the text that is being saved
+            console.log("Saving text: " + text);
+
+            // Try to create a file object with the name and content
+            try {
+                var file = new File(filename, text);
+
+                // Log that the file object was created successfully
+                console.log("File object created successfully");
+            } catch (error) {
+                // Log that an error occurred while creating the file object
+                console.error("Error creating file object: " + error.message);
+            }
+
+            // Try to store the file in the local storage
+            try {
+                localStorage.setItem("savedText", text);
+                localStorage.setItem(file.name, file.content);
+
+                // Log that the file was stored in the local storage successfully
+                console.log("File stored in local storage successfully");
+            } catch (error) {
+                // Log that an error occurred while storing the file in the local storage
+                console.error("Error storing file in local storage: " + error.message);
+            }
+        }
+
+        function loadText(name) {
+            // Log the name of the file that is being loaded
+            console.log("Loading file: " + name);
+
+            // Get the saved text from the local storage
+            const savedText = localStorage.getItem(name);
+
+            // Check if the saved text exists
             if (savedText) {
+                // Log that the file was found in the local storage
+                console.log("File found in local storage");
+
+                // Set the editor value to the saved text
                 editor.setValue(savedText);
+            }
+            else {
+                // Log that the file was not found in the local storage
+                console.log("File not found in local storage");
+
+                // Call the init function
+                init();
             }
         }
 
@@ -70,11 +137,32 @@
                 title = filename;
             }
         }
+
+        function write(filename) {
+            // Get the ACE editor instance
+            var editor = ace.edit("editor");
+            // Clear the text buffer
+            editor.setValue("");
+            menuItems[0].text = filename; // append the filename to the first menu item
+            console.log(menuItems[0].text)
+
+        }
+
+        function handleStorageChange(event) {
+            // Log the event details
+            console.log("Storage event:", event);
+            // Check the key that was changed
+            if (event.key === "filename") {
+                // Do something with the new value
+                console.log("New value:", event.newValue);
+            }
+        }
+
+        // Add the listener to the window object
+        window.addEventListener("storage", handleStorageChange);
         // Add an event listener to load the saved text when the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', loadText);
         // add an event listener to load the title when the DOM loaded
-        document.addEventListener('DOMContentLoaded', loadTitle);
-        // Add an event listener to save the text in the editor whenever it changes
         editor.on('change', saveText);
 
         async function saveToGitHub(owner, token, repo, filename) {
@@ -155,6 +243,7 @@
             const repo = localStorage.getItem('repo');
             const filename = localStorage.getItem('filename');
             saveToGitHub(username, token, repo, filename);
+            document.title = filename;
         }
 
         // Menu class definition
@@ -293,7 +382,6 @@
                 text: 'save to git repo',
                 action: () => {
                     save();
-                    document.title = filename;
                 }
             },
             {
@@ -317,7 +405,7 @@
                     const repo = localStorage.getItem('repo');
                     const filename = localStorage.getItem('filename');
                     saveToGitHub(username, token, repo, filename); //save the old file
-                    newFile.attachTo(palette.element);
+                    newFileMenu.attachTo(palette.element);
                 }
             },
             {
@@ -497,7 +585,7 @@
         }
         const dirTree = new DirectoryTreeDisplay();
 
-        class NewFile {
+        class NewFileMenu {
             constructor() {
                 this.element = document.createElement('div');
                 this.element.id = 'new-file';
@@ -517,7 +605,7 @@
                     // Remove the panel element from its parent
                     var filename = localStorage.getItem('filename')
                     this.element.parentNode.removeChild(this.element);
-                    newFile.write(filename);
+                    write(filename);
                 });
                 // Append the button to the panel element
                 this.element.appendChild(closeButton);
@@ -541,18 +629,10 @@
                 element.appendChild(this.element); // Added semicolon
             }
 
-            write(filename) {
-                // Get the ACE editor instance
-                var editor = ace.edit("editor");
-                // Clear the text buffer
-                editor.setValue("");
-                menuItems[0].text = filename; // append the filename to the first menu item
-                console.log(menuItems[0].text)
 
-            }
         }
 
-        const newFile = new NewFile();
+        const newFileMenu = new NewFileMenu();
         // Add an event listener for keydown events
         document.addEventListener('keydown', (event) => {
             // Check if the cmd+space keys are pressed
