@@ -10,6 +10,20 @@ html, body {
     align-items: center;
 }
 
+ul :hover {
+    cursor: pointer;
+}
+
+#throbber  {
+    visibility: hidden;
+    display: inline;
+}
+
+#hourglass {
+    width: 10%;
+    height: auto;
+}
+
 /* Style the button */
 #menu-button {
   position: fixed;
@@ -17,21 +31,28 @@ html, body {
   left: 10px;
   z-index: 10;
   transition: transform 0.3s; /* enable transition effect */
+}
 
+#menu-button :hover {
+    cursor: pointer;
 }
 
 /* Style the menu */
 #menu {
   position: fixed;
   top: 0;
-  left: -350px; /* hide it outside of the screen */
+  left: calc(-350px); /* hide it outside of the screen */
   width: 250px;
   height: 100%;
   background-color: #ffffff;
   color: black;
   overflow-x: hidden; /* disable horizontal scroll */
   transition: transform 0.2s; /* enable transition effect */
+  font-family: iawriter;
+  font-weight: italic;
+  list-style: none;
 }
+
 
 /* Style the menu items */
 #menu ul {
@@ -55,6 +76,10 @@ html, body {
   margin: 0;
   padding: 0;
   display: none; /* hide by default */
+}
+
+.submenu :hover {
+    font-style: italic;
 }
 
 /* Style the submenu items */
@@ -81,8 +106,14 @@ html, body {
     transform: translateX(200px);
 }
 
+/* define a class that toggles visibility. you have to use !Important to override the original class definition*/
+.invisible {
+    visibility: visible !important;
+}
+
 /* Set the width and height of the parent element */
 #editor-container {
+    margin-top: 10px;
   width: 50%;
   height: 100%;
 }
