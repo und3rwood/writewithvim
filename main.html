@@ -1,22 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <link rel="icon" href="favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Editor with Vim Keybindings</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q==" crossorigin="anonymous"></script>
+    <title>webprose</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"
+        integrity="sha512-GZ1RIgZaSc8rnco/8CXfRdCpDxRCphenIiZ2ztLy3XQfCbQUSCuk8IudvNHxkRA3oUg6q0qejgN/qqyG1duv5Q=="
+        crossorigin="anonymous"></script>
 </head>
+
 <body>
-    
-    <div id="editor"></div>
+
+
+    <div id="editor-container">
+        <div id="editor"></div>
+    </div>
+
+    <button id="menu-button">Menu</button>
+
+    <ul id="menu">
+        <li>Files
+            <ul class="submenu" id="files">
+        </li>
+
+    </ul>
+    <li>Info
+        <ul class="submenu" id="info">
+            <li>test</li>
+        </ul>
+    </li>
+    <li>Customize</li>
+    <li>save files with ctrl+s. The first line is the filename. Reload the page to refresh the file list.</li>
+    <li>
+        <div id="throbber">
+            <p>saving...</p>
+            <img id="hourglass" src="./throbber.gif">
+        </div>
+    </li>
+    </ul>
     <script>
+        //get the list of files from localstorage.
+        function listFiles() {
+            var list = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                list.push(key);
+            }
+            return list;
+            console.log(list);
+        }
+
         const editor = ace.edit("editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
         editor.setKeyboardHandler("ace/keyboard/vim");
         editor.renderer.setShowGutter(false);
-        
+        editor.commands.addCommand({
+            name: 'save',
+            bindKey: { win: 'Ctrl-S', mac: 'Cmd-S' },
+            exec: function (editor) {
+                save(editor.getValue());
+            },
+            readOnly: true // false if this command should not apply in readOnly mode
+        });
+
         editor.setOptions({
             showInvisibles: false, // Disable display of invisible characters
             tabSize: 4,
@@ -25,285 +75,148 @@
             indentedSoftWrap: false,
             wrap: "free",
             fontFamily: 'iawriter'
+
         })
 
-        ace.config.loadModule("ace/keybinding/vim", function() { // Use Vim Here
+        ace.config.loadModule("ace/keybinding/vim", function () { // Use Vim Here
             Vim = require("ace/keyboard/vim").Vim
             Vim.map("j", "gj", "normal")
             Vim.map("k", "gk", "normal")
-        }) 
+        })
 
-        function saveText() {
-            const text = editor.getValue();
-            localStorage.setItem('savedText', text);
+        function save(text) {
+            const title = makeTitle(text);
+            localStorage.setItem(title, text);
+            listFiles();
+            // add the title to the file list in localstorage
+            let throbber = document.getElementById("throbber"); // get the throbber element by ID on the DOM
+            throbber.classList.toggle("invisible"); //this adds the 'visible' class to the throbber if it doesn't have it.
+            setTimeout(function () {
+                throbber.classList.toggle("invisible"); // after a second of visibility, invert the visible state.
+            }, 1000); 
+            console.log('saving...')
+
         }
 
-        function loadText() {
-            const savedText = localStorage.getItem('savedText');
-            if (savedText) {
-                editor.setValue(savedText);
+        setInterval(function () {
+            save(editor.getValue());
+            //make an element visible for a second, then invisible. assume it's hidden by default
+        }, 4000);
+
+        function makeTitle(text) {
+            let strings = text.split("\n");
+            let title = strings[0];
+            return title;
+        }
+
+        // Get the button and the menu elements
+        let menuButton = document.getElementById("menu-button");
+        let menu = document.getElementById("menu");
+
+        // Add a click event listener to the button
+        menuButton.addEventListener("click", function () {
+            // Toggle the open class on the menu
+            menu.classList.toggle("open");
+            menuButton.classList.toggle("button-open");
+            console.log("clicked");
+        });
+
+        buildFileMenu();
+
+        function buildFileMenu() {
+            // Get all menu items that have a submenu
+            let menuItems = document.querySelectorAll("#menu > li");
+
+            // Loop through each menu item
+            for (let menuItem of menuItems) {
+                // Get the submenu of the current menu item
+                let submenu = menuItem.querySelector(".submenu");
+
+                // Check if there is a submenu
+                if (submenu) {
+                    // Add a click event listener to the menu item
+                    menuItem.addEventListener("click", function () {
+                        // Toggle the active class on the submenu
+                        submenu.classList.toggle("active");
+                    });
+
+                    stopMenuProp(submenu); //prevent clicks on the submenu from propagating to the upper menu and closing everythign
+
+                }
+                if (submenu && submenu.id == "files") {
+                    console.log("there is a file menu");
+                    let files = listFiles();
+                    for (let file of files) {
+                        if (file) {
+                            console.log(file)
+                            var text = document.createTextNode(file);
+                            var li = document.createElement('li');
+                            li.appendChild(text);
+                            submenu.appendChild(li);
+                            stopMenuProp(submenu);
+                            // add event listener to li
+                            li.addEventListener("click", function () {
+                                // get the text value of li
+                                var key = this.textContent;
+                                // load the file from localStorage
+                                var fileContent = localStorage.getItem(key);
+                                // do something with fileContent
+                                editor.setValue(fileContent);
+                            });
+                        }
+                    }
+                }
             }
         }
 
-    // Add an event listener to load the saved text when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', loadText);
-    // Add an event listener to save the text in the editor whenever it changes
-    editor.on('change', saveText);
-
-    async function saveToGitHub(owner, token, repo, filename) {
-    const text = editor.getValue(); // Replace this with the method to get the text from your editor
-// Log the owner, token, repo, and filename
-console.log(`Owner: ${owner}, Token: ${token}, Repo: ${repo}, Filename: ${filename}`);
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filename}`;
-
-    // Get the current file content from the repo
-    const response = await fetch(url, {
-        headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github+json'
+        // Define a function that updates the file list menu
+        function updateFileListMenu() {
+            // Select the submenu element with the id "files"
+            let submenu = document.getElementById("files");
+            // Check if there is such an element
+            if (submenu) {
+                // Clear the submenu content
+                submenu.innerHTML = "";
+                // Get the files from localStorage
+                let files = listFiles();
+                // Loop through each file
+                for (let file of files) {
+                    // Check if the file is not empty
+                    if (file) {
+                        // Create a text node with the file name
+                        var text = document.createTextNode(file);
+                        // Create an li element
+                        var li = document.createElement('li');
+                        // Append the text node to the li element
+                        li.appendChild(text);
+                        // Append the li element to the submenu
+                        submenu.appendChild(li);
+                        // Stop the event propagation on the li element
+                        stopMenuProp(li);
+                    }
+                }
+            }
         }
-    });
 
-    const data = await response.json();
+        // Add a storage event listener to call the function when localStorage changes
+        window.addEventListener("storage", updateFileListMenu);
 
-    // Update the file content in the repo
-    const updateResponse = await fetch(url, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github+json'
-        },
-        body: JSON.stringify({
-            message: 'Update file content',
-            content: btoa(text),
-            sha: data.sha
-        })
-    });
+        function stopMenuProp(submenu) {
+            // Get all the submenu items
+            let submenuItems = submenu.querySelectorAll("li");
 
-    const updateData = await updateResponse.json();
-
-    if (updateResponse.ok) {
-        console.log('File saved successfully:', updateData);
-    } else {
-        console.error('Error saving file:', updateData);
-    }
-    }
-
-// Menu class definition
-class Menu {
-    constructor(items) {
-        this.items = items;
-        this.menuElement = document.createElement('div');
-        const searchBox = document.createElement('input');
-        this.searchBox = searchBox;
-        searchBox.type = 'text';
-        searchBox.placeholder = 'Search for options...';
-        searchBox.style.width = '100%';
-        searchBox.style.padding = 'auto';
-        searchBox.style.marginBottom = '10px';
-        searchBox.addEventListener('input', () => this.filterItems(searchBox.value));
-       // Add an event listener for the 'Enter' key press
-
-        
-        this.menuElement.appendChild(searchBox);
-
-        this.listElement = document.createElement('ul');
-        this.listElement.style.listStyleType = 'none';
-        this.listElement.style.padding = '0';
-        this.listElement.style.margin = '0';
-        this.menuElement.appendChild(this.listElement);
-
-        items.forEach(item => this.createItem(item));
-    }
-
-
-    createItem(item) {
-        const listItem = document.createElement('li');
-        listItem.style.display = 'block';
-        listItem.style.padding = 'auto';
-        listItem.style.marginBottom = '5px'
-        listItem.style.cursor = 'pointer';
-        listItem.textContent = item.text;
-        listItem.addEventListener('click', item.action);
-        this.listElement.appendChild(listItem);
-    }
-
-    filterItems(searchText) {
-        this.listElement.innerHTML = '';
-        this.items
-            .filter(item => item.text.toLowerCase().includes(searchText.toLowerCase()))
-            .forEach(item => this.createItem(item));
-    }
-
-
-
-    attachTo(element) {
-        element.appendChild(this.menuElement);
-    }
-}
-
-        
-// GitInfo class definition
-class GitInfo {
-// Function to create the gitInfoMenu as a div centered on the palette
-    
-    constructor() {
-        this.element = document.createElement('div');
-        this.element.id = 'git-info'; 
-        this.createInput('GitHub Username', 'username');
-        this.createInput('GitHub Token', 'token');
-        this.createInput('Repository Name', 'repo');
-        this.createInput('File Name', 'filename');
-        const saveButton = document.createElement('button');
-        saveButton.textContent = 'Save';
-        saveButton.addEventListener('click', () => this.saveCredentials());
-        this.element.appendChild(saveButton);
-    }
-
-    createInput(labelText, storageKey) {
-        const label = document.createElement('label');
-        label.textContent = labelText;
-        this.element.appendChild(label);
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = localStorage.getItem(storageKey) || '';
-        input.addEventListener('input', () => localStorage.setItem(storageKey, input.value));
-        this.element.appendChild(input);
-    }
-
-    saveCredentials() {
-        // Save the credentials to localStorage
-        const username = localStorage.getItem('username');
-        const token = localStorage.getItem('token');
-        const repo = localStorage.getItem('repo');
-        const filename = localStorage.getItem('filename');
-    }
-
-    attachTo(element) {
-        element.appendChild(this.element);
-    }
-
-}
-
-// Instantiate the GitInfo class
-const gitInfo = new GitInfo();
-
-// Modify the menuItems array to include the gitInfo element
-const menuItems = [
-    {
-        text: 'save to git repo',
-        action: () => {
-            const username = localStorage.getItem('username');
-            const token = localStorage.getItem('token');
-            const repo = localStorage.getItem('repo');
-            const filename = localStorage.getItem('filename');
-            saveToGitHub(username, token, repo, filename);
+            // Loop through each submenu item
+            for (let submenuItem of submenuItems) {
+                // Add a click event listener to the submenu item
+                submenuItem.addEventListener("click", function (event) {
+                    // Stop the event propagation to the parent menu item
+                    event.stopPropagation();
+                });
+            }
         }
-    },
-    {
-        text: 'add your git info',
-        action: () => {
-// Create the GitInfoMenu as a child of the palette
-        gitInfo.attachTo(palette.element);
-    }
-
-           
-    },
-];
-        
-const menu = new Menu(menuItems);
+    </script>
 
 
-// CommandPalette class definition
-class CommandPalette {
-    constructor() {
-        this.isOpen = false;
-        this.element = null;
-    }
-
-    open() {
-        if (!this.isOpen) {
-
-
-        // Create the overlay element
-            this.overlay = document.createElement('div');
-            this.overlay.style.position = 'fixed';
-            this.overlay.style.top = '0';
-            this.overlay.style.left = '0';
-            this.overlay.style.width = '100%';
-            this.overlay.style.height = '100%';
-            this.overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            this.overlay.style.backdropFilter = 'blur(5px)';
-            this.overlay.style.zIndex = '999';
-
-
-            document.body.appendChild(this.overlay);
-            //event listener for closing the overlay
-            this.overlay.addEventListener('click', () => {
-                palette.close();
-            });
-        //make the box
-            this.element = document.createElement('div');
-            this.element.id = 'command-palette';
-            this.element.style.position = 'fixed';
-            this.element.style.top = '50%';
-            this.element.style.left = '50%';
-            this.element.style.transform = 'translate(-50%, -50%)';
-            this.element.style.zIndex = '1000';
-            this.element.style.backgroundColor = 'white';
-            this.element.style.border = '2px solid black';
-        // Add border-radius to make the border rounded at the corners
-            this.element.style.borderRadius = '10px';
-            this.element.style.padding = '10px';
-            this.element.style.width = '30vw';
-            this.element.style.height = '30vh';
-        // Enable vertical scrolling if the content overflows the element's height
-            this.element.style.overflowY = 'auto';
-
-            this.element.style.display = 'flex';
-            this.element.style.alignItems = 'center';
-            this.element.style.justifyContent = 'center';
-            
-            document.body.appendChild(this.element);
-        // Add the menu to the command palette
-            this.element.appendChild(menu.menuElement);
-            this.isOpen = true;
-        }
-        
-    }
-
-    close() {
-        if (this.isOpen) {
-            document.body.removeChild(this.overlay);
-            document.body.removeChild(this.element);
-            this.isOpen = false;
-        }
-        
-    }
-
-    
-}
-
-// Instantiate the CommandPalette class
-const palette = new CommandPalette();
-
-// Add an event listener for keydown events
-document.addEventListener('keydown', (event) => {
-    // Check if the cmd+space keys are pressed
-    if ((event.metaKey || event.ctrlKey) && event.code === 'Space') {
-    if (palette.isOpen) {
-        palette.close();
-    } else {
-        palette.open();
-    }
-   
-}
-
-});
-
-
-</script>
 </body>
+
 </html>
-    
