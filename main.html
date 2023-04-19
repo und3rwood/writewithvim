@@ -14,8 +14,39 @@
 
 <body>
 
-    <div id="editor"></div>
+
+    <div id="editor-container">
+        <div id="editor"></div>
+    </div>
+
+    <button id="menu-button">Menu</button>
+
+    <ul id="menu">
+        <li>Files
+            <ul class="submenu" id="files">
+        </li>
+
+    </ul>
+    <li>Info
+        <ul class="submenu" id="info">
+            <li>test</li>
+        </ul>
+    </li>
+    <li>Customize</li>
+    <li>save files with ctrl+s. The first line is the filename. Reload the page to refresh the file list.</li>
+    </ul>
     <script>
+        //get the list of files from localstorage.
+        function listFiles() {
+            var list = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                list.push(key);
+            }
+            return list;
+            console.log(list);
+        }
+
         const editor = ace.edit("editor");
         editor.setTheme("ace/theme/monokai");
         editor.session.setMode("ace/mode/text");
@@ -25,7 +56,7 @@
             name: 'save',
             bindKey: { win: 'Ctrl-S', mac: 'Cmd-S' },
             exec: function (editor) {
-                // call your save function here
+                save(editor.getValue());
             },
             readOnly: true // false if this command should not apply in readOnly mode
         });
@@ -47,9 +78,127 @@
             Vim.map("k", "gk", "normal")
         })
 
-    
-        
+        function save(text) {
+            const title = makeTitle(text);
+            localStorage.setItem(title, text);
+            listFiles();
+            // add the title to the file list in localstorage
+        }
+
+        function makeTitle(text) {
+            let strings = text.split("\n");
+            let title = strings[0];
+            return title;
+        }
+
+        // Get the button and the menu elements
+        let menuButton = document.getElementById("menu-button");
+        let menu = document.getElementById("menu");
+
+        // Add a click event listener to the button
+        menuButton.addEventListener("click", function () {
+            // Toggle the open class on the menu
+            menu.classList.toggle("open");
+            menuButton.classList.toggle("button-open");
+            console.log("clicked");
+        });
+
+        buildFileMenu();
+
+        function buildFileMenu() {
+            // Get all menu items that have a submenu
+            let menuItems = document.querySelectorAll("#menu > li");
+
+            // Loop through each menu item
+            for (let menuItem of menuItems) {
+                // Get the submenu of the current menu item
+                let submenu = menuItem.querySelector(".submenu");
+
+                // Check if there is a submenu
+                if (submenu) {
+                    // Add a click event listener to the menu item
+                    menuItem.addEventListener("click", function () {
+                        // Toggle the active class on the submenu
+                        submenu.classList.toggle("active");
+                    });
+
+                    stopMenuProp(submenu); //prevent clicks on the submenu from propagating to the upper menu and closing everythign
+
+                }
+                if (submenu && submenu.id == "files") {
+                    console.log("there is a file menu");
+                    let files = listFiles();
+                    for (let file of files) {
+                        if (file) {
+                            console.log(file)
+                            var text = document.createTextNode(file);
+                            var li = document.createElement('li');
+                            li.appendChild(text);
+                            submenu.appendChild(li);
+                            stopMenuProp(submenu);
+                            // add event listener to li
+                            li.addEventListener("click", function () {
+                                // get the text value of li
+                                var key = this.textContent;
+                                // load the file from localStorage
+                                var fileContent = localStorage.getItem(key);
+                                // do something with fileContent
+                                editor.setValue(fileContent);
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // Define a function that updates the file list menu
+        function updateFileListMenu() {
+            // Select the submenu element with the id "files"
+            let submenu = document.getElementById("files");
+            // Check if there is such an element
+            if (submenu) {
+                // Clear the submenu content
+                submenu.innerHTML = "";
+                // Get the files from localStorage
+                let files = listFiles();
+                // Loop through each file
+                for (let file of files) {
+                    // Check if the file is not empty
+                    if (file) {
+                        // Create a text node with the file name
+                        var text = document.createTextNode(file);
+                        // Create an li element
+                        var li = document.createElement('li');
+                        // Append the text node to the li element
+                        li.appendChild(text);
+                        // Append the li element to the submenu
+                        submenu.appendChild(li);
+                        // Stop the event propagation on the li element
+                        stopMenuProp(li);
+                    }
+                }
+            }
+        }
+
+        // Add a storage event listener to call the function when localStorage changes
+        window.addEventListener("storage", updateFileListMenu);
+
+        function stopMenuProp(submenu) {
+            // Get all the submenu items
+            let submenuItems = submenu.querySelectorAll("li");
+
+            // Loop through each submenu item
+            for (let submenuItem of submenuItems) {
+                // Add a click event listener to the submenu item
+                submenuItem.addEventListener("click", function (event) {
+                    // Stop the event propagation to the parent menu item
+                    event.stopPropagation();
+                });
+            }
+        }
     </script>
+
+
 </body>
 
 </html>
