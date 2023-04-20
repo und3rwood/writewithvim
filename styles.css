@@ -13,6 +13,12 @@ ul :hover {
     cursor: pointer;
 }
 
+#sync-button {
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-weight:normal;
+}
+
 #throbber {
     visibility: hidden;
     display: inline;

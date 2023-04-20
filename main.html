@@ -30,17 +30,15 @@
             <ul class="submenu" id="info">
                 <li id="git-form">
                     <div>
-                        <form id="git-form">
-                            <label for="username">Username:</label>
-                            <input type="text" id="username" name="username" required>
-                            <label for="repo">Repo:</label>
-                            <input type="text" id="repo" name="repo" required>
-                            <label for="token">Token:</label>
-                            <input type="password" id="token" name="token" required>
-                        </form>
+                        <input type="text" name="username" placeholder="Enter your Git username">
+                        <input type="text" name="token" placeholder="Enter your Access Token">
+                        <input type="text" name="repo" placeholder="Enter your Git repo">
                     </div>
                 </li>
             </ul>
+        </li>
+        <li id="sync-button">
+            $ync with Git
         </li>
         <li>Customize</li>
         <li>save files with ctrl+s.</li>
@@ -57,6 +55,8 @@
         </li>
     </ul>
     <script>
+        //define functions to put and retrieve data to github + a listener for the github sync button and a function that syncs everything up real nice
+        
         //get the list of files from localstorage.
         function listFiles() {
             var list = [];
