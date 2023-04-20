@@ -30,9 +30,10 @@
             <ul class="submenu" id="info">
                 <li id="git-form">
                     <div>
-                        <input type="text" name="username" placeholder="Enter your Git username">
-                        <input type="text" name="token" placeholder="Enter your Access Token">
-                        <input type="text" name="repo" placeholder="Enter your Git repo">
+                        <input type="text" id="username" name="username" placeholder="your Git username">
+                        <input type="text" id="token" name="token" placeholder="your Access Token">
+                        <input type="text" id="repo" name="repo" placeholder="your Git repo">
+                        <input type="text" id="branch" name="branch" placeholder="your repo branch">
                     </div>
                 </li>
             </ul>
@@ -55,8 +56,133 @@
         </li>
     </ul>
     <script>
-        //define functions to put and retrieve data to github + a listener for the github sync button and a function that syncs everything up real nice
+
+        function textListeners() {
+           const list = document.getElementById("git-form");
+           const length = list.children.length;
+           for(let i = 0; i < length; i++) {
+                const item = list.children[i];
+                item.addEventListener()
+           }
+        }
         
+        //define functions to put and retrieve data to github + a listener for the github sync button and a function that syncs everything up real nice
+        function gitSync() {
+            // Replace these values with your own
+            const token = "YOUR_TOKEN";
+            const owner = "YOUR_USERNAME";
+            const repo = "YOUR_REPO_NAME";
+            const branch = "YOUR_BRANCH_NAME";
+
+            // The URL of the API endpoint
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/`;
+
+            // The options for the fetch request
+            const options = {
+                method: "GET", // The HTTP method to use
+                headers: {
+                    // The request headers
+                    Authorization: `token ${token}`, // The authentication token
+                    "Content-Type": "application/json" // The content type
+                }
+            };
+
+            // A helper function to encode data in base64 format
+            function encodeBase64(data) {
+                return btoa(unescape(encodeURIComponent(data)));
+            }
+
+            // A helper function to decode data from base64 format
+            function decodeBase64(data) {
+                return decodeURIComponent(escape(atob(data)));
+            }
+
+            // A helper function to check if a file exists in the repo
+            async function fileExists(path) {
+                try {
+                    // Make a request to get the file metadata
+                    const response = await fetch(url + path, options);
+                    const responseData = await response.json();
+                    // If the response is successful, return true and the SHA value
+                    if (response.ok) {
+                        return [true, responseData.sha];
+                    }
+                    // If the response is not found, return false and null
+                    if (response.status === 404) {
+                        return [false, null];
+                    }
+                    // Otherwise, throw an error with the status code and message
+                    throw new Error(`${response.status}: ${responseData.message}`);
+                } catch (error) {
+                    // Handle the error
+                    console.error(error);
+                }
+            }
+
+            // A helper function to create or update a file in the repo
+            async function createOrUpdateFile(path, content, sha) {
+                try {
+                    // The data to send in the request body
+                    const requestData = {
+                        message: "Synced file from localStorage", // The commit message
+                        content: encodeBase64(content), // The base64 encoded content of the file
+                        branch: branch // The branch name
+                    };
+                    // If a SHA value is provided, add it to the data object
+                    if (sha) {
+                        requestData.sha = sha;
+                    }
+                    // The options for the fetch request
+                    const options = {
+                        method: "PUT", // The HTTP method to use
+                        headers: {
+                            // The request headers
+                            Authorization: `token ${token}`, // The authentication token
+                            "Content-Type": "application/json" // The content type
+                        },
+                        body: JSON.stringify(requestData) // The stringified request body
+                    };
+                    // Make a request to create or update the file
+                    const response = await fetch(url + path, options);
+                    const responseData = await response.json();
+                    // If the response is successful, log the result
+                    if (response.ok) {
+                        console.log(`Created or updated file ${path}`);
+                        console.log(responseData);
+                    }
+                    // Otherwise, throw an error with the status code and message
+                    throw new Error(`${response.status}: ${responseData.message}`);
+                } catch (error) {
+                    // Handle the error
+                    console.error(error);
+                }
+            }
+
+            // A function to sync all documents in localStorage to the repo
+            async function syncDocuments() {
+                try {
+                    // Loop through all keys in localStorage
+                    for (let i = 0; i < localStorage.length; i++) {
+                        // Get the key and value of each item
+                        const key = localStorage.key(i);
+                        const value = localStorage.getItem(key);
+                        // Check if a file with the same name exists in the repo
+                        const [exists, sha] = await fileExists(key);
+                        // If it exists, update it with the value from localStorage and pass the SHA value
+                        if (exists) {
+                            await createOrUpdateFile(key, value, sha);
+                        }
+                        // If it doesn't exist, create it with the value from localStorage and pass null as SHA value
+                        else {
+                            await createOrUpdateFile(key, value, null);
+                        }
+                    }
+                } catch (error) {
+                    // Handle the error
+                    console.error(error);
+                }
+            }
+        }
         //get the list of files from localstorage.
         function listFiles() {
             var list = [];
@@ -112,11 +238,11 @@
             console.log('saving...')
 
         }
-
+        //save the editor every so often
         setInterval(function () {
             save(editor.getValue());
             //make an element visible for a second, then invisible. assume it's hidden by default
-        }, 4000);
+        }, 15 * 1000);
 
         function makeTitle(text) {
             let strings = text.split("\n");
@@ -134,6 +260,13 @@
             menu.classList.toggle("open");
             menuButton.classList.toggle("button-open");
             console.log("clicked");
+        });
+
+        //add a click event listener to the git sync button
+        let gitButton = document.getElementById("sync-button")
+        gitButton.addEventListener("click", function() {
+            console.log("syncing");
+            gitSync();
         });
 
         buildFileMenu();
