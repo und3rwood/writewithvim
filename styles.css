@@ -21,8 +21,8 @@ ul :hover {
 #hourglass {
     width: 10%;
     height: auto;
-    position: absolute;
-    right: 50%;
+    position: relative;
+    top: 5px;
 }
 
 /* Style the button */
@@ -56,7 +56,6 @@ ul :hover {
     font-family: iawriter;
     list-style: none;
 }
-
 
 /* Style the menu items */
 #menu ul {
@@ -112,6 +111,10 @@ ul :hover {
 /* italicize the items in the file menu*/
 #files :hover {
     font-style: italic;
+}
+
+#files li:active {
+    font-weight: bold;
 }
 
 /* Style the submenu items */
