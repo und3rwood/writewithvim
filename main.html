@@ -23,23 +23,38 @@
 
     <ul id="menu">
         <li>Files
-            <ul class="submenu" id="files">
+            <ul class="submenu" id="files"></ul>
         </li>
 
-    </ul>
-    <li>Info
-        <ul class="submenu" id="info">
-            <li>test</li>
-        </ul>
-    </li>
-    <li>Customize</li>
-    <li>save files with ctrl+s. The first line is the filename. Reload the page to refresh the file list.</li>
-    <li>
-        <div id="throbber">
-            <p>saving...</p>
-            <img id="hourglass" src="./throbber.gif">
-        </div>
-    </li>
+        <li>Info
+            <ul class="submenu" id="info">
+                <li id="git-form">
+                    <div>
+                        <form id="git-form">
+                            <label for="username">Username:</label>
+                            <input type="text" id="username" name="username" required>
+                            <label for="repo">Repo:</label>
+                            <input type="text" id="repo" name="repo" required>
+                            <label for="token">Token:</label>
+                            <input type="password" id="token" name="token" required>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </li>
+        <li>Customize</li>
+        <li>save files with ctrl+s.</li>
+        <li>The first line is the filename.</li>
+        <li>Reload the page to refresh the file list.</li>
+        <li>
+            <div id="throbber">
+
+                <p>
+                    <img id="hourglass" src="./throbber.gif">
+                    saving...
+                </p>
+            </div>
+        </li>
     </ul>
     <script>
         //get the list of files from localstorage.
@@ -93,7 +108,7 @@
             throbber.classList.toggle("invisible"); //this adds the 'visible' class to the throbber if it doesn't have it.
             setTimeout(function () {
                 throbber.classList.toggle("invisible"); // after a second of visibility, invert the visible state.
-            }, 1000); 
+            }, 3000);
             console.log('saving...')
 
         }

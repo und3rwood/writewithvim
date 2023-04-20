@@ -1,6 +1,5 @@
-
-
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     height: 100%;
@@ -14,7 +13,7 @@ ul :hover {
     cursor: pointer;
 }
 
-#throbber  {
+#throbber {
     visibility: hidden;
     display: inline;
 }
@@ -22,15 +21,18 @@ ul :hover {
 #hourglass {
     width: 10%;
     height: auto;
+    position: absolute;
+    right: 50%;
 }
 
 /* Style the button */
 #menu-button {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  transition: transform 0.3s; /* enable transition effect */
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    transition: transform 0.3s;
+    /* enable transition effect */
 }
 
 #menu-button :hover {
@@ -39,67 +41,99 @@ ul :hover {
 
 /* Style the menu */
 #menu {
-  position: fixed;
-  top: 0;
-  left: calc(-350px); /* hide it outside of the screen */
-  width: 250px;
-  height: 100%;
-  background-color: #ffffff;
-  color: black;
-  overflow-x: hidden; /* disable horizontal scroll */
-  transition: transform 0.2s; /* enable transition effect */
-  font-family: iawriter;
-  font-weight: italic;
-  list-style: none;
+    position: fixed;
+    top: 0;
+    left: calc(-350px);
+    /* hide it outside of the screen */
+    width: 250px;
+    height: 100%;
+    background-color: #ffffff;
+    color: black;
+    overflow-x: hidden;
+    /* disable horizontal scroll */
+    transition: transform 0.2s;
+    /* enable transition effect */
+    font-family: iawriter;
+    list-style: none;
 }
 
 
 /* Style the menu items */
 #menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 #menu ul li {
-  padding: 10px;
+    padding: 10px;
 }
 
 #menu ul li a {
-  color: black;
-  text-decoration: none;
+    color: black;
+    text-decoration: none;
 }
 
 /* Style the submenus */
 .submenu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: none; /* hide by default */
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+    /* hide by default */
 }
 
-.submenu :hover {
+.submenu::before {
+    content: "";
+    width: 1px;
+    height: 100%;
+    background-color: #333;
+    position: absolute;
+    left: -5px;
+}
+
+.submenu li::before {
+ content: "";
+  display: inline-block;
+  width: 10px;
+  height: 1px;
+  background-color: #333;
+  position: relative;
+  top: calc(50% - 0.5px);
+  left: -15px;
+  text-align: left;
+}
+
+.submenu ul li {
+  position: relative !important;
+}
+
+/* italicize the items in the file menu*/
+#files :hover {
     font-style: italic;
 }
 
 /* Style the submenu items */
 .submenu > li {
-  padding: 10px;
+    padding: 10px;
 }
 
 /* Add a transition effect to the submenus */
 .submenu {
-  transition: max-height 0.5s ease-in-out;
+    transition: max-height 0.5s ease-in-out;
 }
 
 /* Show the submenus when they have an active class */
 .submenu.active {
-  display: block; /* show */
+    display: block;
+    /* show */
 }
 
 /* Define a class that slides in the menu */
 .open {
-  transform: translateX(350px); /* move it to the right by its width */
+    transform: translateX(350px);
+    /* move it to the right by its width */
 }
 
 .button-open {
@@ -114,31 +148,36 @@ ul :hover {
 /* Set the width and height of the parent element */
 #editor-container {
     margin-top: 10px;
-  width: 50%;
-  height: 100%;
+    width: 50%;
+    height: 100%;
 }
 
 /* Set the width and height of the ace editor element */
 #editor {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 .ace_editor {
     background-color: white !important;
 }
+
 .ace_editor .ace_text-layer {
     color: black !important;
 }
+
 .ace_editor .ace_active-line {
     background-color: transparent !important;
 }
+
 .ace_text-layer {
     text-align: left !important;
 }
+
 .ace_line {
     text-indent: 0 !important;
 }
+
 .ace_editor .ace_line-group:first-child .ace_line {
     text-indent: 2em !important;
 }
@@ -148,17 +187,17 @@ ul :hover {
 }
 
 .ace_editor .ace_selection {
-  background: #FFC0CB !important;
+    background: #FFC0CB !important;
 }
 
 .ace_editor .ace_cursor {
-  color: black;
+    color: black;
 }
 
 
 @font-face {
-  font-family: 'iawriter';
-  src: url('fonts/iAWriterMonoS-Regular.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
+    font-family: 'iawriter';
+    src: url('fonts/iAWriterMonoS-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
 }
