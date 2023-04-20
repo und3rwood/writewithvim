@@ -28,13 +28,14 @@
 
         <li id="top">Info
             <ul class="submenu" id="info">
-                <li id="git-form">
-                    <div>
-                        <input type="text" id="username" name="username" placeholder="your Git username">
+                <li> <!--this used to have the id="git-form." i removed it and put it in the div below. bugs may ensue!!!-->
+                    <div id="git-form">
+                        <input type="text" id="username" name="username" placeholder="your Git username"> <!---todo: load the placeholder values from localstorage so you can see em-->
                         <input type="text" id="token" name="token" placeholder="your Access Token">
                         <input type="text" id="repo" name="repo" placeholder="your Git repo">
                         <input type="text" id="branch" name="branch" placeholder="your repo branch">
                     </div>
+
                 </li>
             </ul>
         </li>
@@ -55,24 +56,14 @@
             </div>
         </li>
     </ul>
-    <script>
+<script>
 
-        function textListeners() {
-           const list = document.getElementById("git-form");
-           const length = list.children.length;
-           for(let i = 0; i < length; i++) {
-                const item = list.children[i];
-                item.addEventListener()
-           }
-        }
-        
-        //define functions to put and retrieve data to github + a listener for the github sync button and a function that syncs everything up real nice
-        function gitSync() {
-            // Replace these values with your own
-            const token = "YOUR_TOKEN";
-            const owner = "YOUR_USERNAME";
-            const repo = "YOUR_REPO_NAME";
-            const branch = "YOUR_BRANCH_NAME";
+
+            //define functions to put and retrieve data to github + a listener for the github sync button and a function that syncs everything up real nice
+            var token = localStorage.getItem("token");
+            var owner = localStorage.getItem("username");
+            var repo = localStorage.getItem("repo");
+            var branch = localStorage.getItem("branch");
 
             // The URL of the API endpoint
             const url = `https://api.github.com/repos/${owner}/${repo}/contents/`;
@@ -118,7 +109,6 @@
                     console.error(error);
                 }
             }
-
             // A helper function to create or update a file in the repo
             async function createOrUpdateFile(path, content, sha) {
                 try {
@@ -182,7 +172,26 @@
                     console.error(error);
                 }
             }
+        
+
+        async function sync(){
+            await syncDocuments();
         }
+
+        //set up text listeners
+        function textListeners() {
+           const list = document.getElementById("git-form");
+           const length = list.children.length;
+           for(let i = 0; i < length; i++) {
+                const item = list.children[i];
+                item.addEventListener('input', (event) => {
+                    let key = item.id;
+                    localStorage.setItem(key, event.target.value);
+                });
+           }
+        }
+        textListeners();
+        
         //get the list of files from localstorage.
         function listFiles() {
             var list = [];
@@ -264,10 +273,7 @@
 
         //add a click event listener to the git sync button
         let gitButton = document.getElementById("sync-button")
-        gitButton.addEventListener("click", function() {
-            console.log("syncing");
-            gitSync();
-        });
+        gitButton.addEventListener("click", sync());
 
         buildFileMenu();
 
